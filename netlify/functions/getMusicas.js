@@ -1,13 +1,8 @@
 const { Pool } = require('pg');
 
 exports.handler = async function (event, context) {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    return { statusCode: 500, body: JSON.stringify({ error: "DATABASE_URL não está configurada." }) };
-  }
-
   const pool = new Pool({
-    connectionString: connectionString,
+    connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
 
@@ -24,7 +19,7 @@ exports.handler = async function (event, context) {
       };
     }
 
-    const { rows } = await pool.query('SELECT id, titulo, artista FROM cifras ORDER BY artista, titulo');
+    const { rows } = await pool.query('SELECT titulo, artista FROM cifras ORDER BY artista, titulo');
     const musicas = rows.map(row => ({
       id: `${row.titulo} - ${row.artista}`,
       titulo: row.titulo,
