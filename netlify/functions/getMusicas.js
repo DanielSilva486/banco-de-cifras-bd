@@ -1,3 +1,5 @@
+// Salve este arquivo como: netlify/functions/getMusicas.js
+
 const { Pool } = require('pg');
 
 exports.handler = async function (event, context) {
@@ -12,29 +14,31 @@ exports.handler = async function (event, context) {
   });
 
   try {
+    // CASO 1: Buscando uma cifra específica por ID
     if (event.queryStringParameters && event.queryStringParameters.id) {
-      const idParts = event.queryStringParameters.id.split(' - ');
-      const titulo = idParts[0];
-      const artista = idParts.slice(1).join(' - ');
-      const { rows } = await pool.query('SELECT cifra_json FROM cifras WHERE titulo = $1 AND artista = $2', [titulo, artista]);
+      const { id } = event.queryStringParameters;
+      const { rows } = await pool.query('SELECT cifra_json FROM cifras WHERE id = $1', [id]);
+      
+      if (rows.length === 0) {
+        return { statusCode: 404, body: JSON.stringify({ error: "Cifra não encontrada." }) };
+      }
+      
+      // Retorna apenas o conteúdo da cifra
       return {
         statusCode: 200,
-        body: JSON.stringify({ cifra: rows[0]?.cifra_json || "Cifra não encontrada." })
+        body: JSON.stringify({ cifra: rows[0].cifra_json })
       };
     }
 
-    const { rows } = await pool.query('SELECT titulo, artista FROM cifras ORDER BY artista, titulo');
-    const musicas = rows.map(row => ({
-      id: `${row.titulo} - ${row.artista}`,
-      titulo: row.titulo,
-      artista: row.artista
-    }));
+    // CASO 2: Buscando a lista completa de músicas para o menu
+    const { rows } = await pool.query('SELECT id, titulo, artista FROM cifras ORDER BY artista, titulo');
     return {
       statusCode: 200,
-      body: JSON.stringify(musicas)
+      body: JSON.stringify(rows) // Retorna um array de objetos: [{id, titulo, artista}, ...]
     };
+
   } catch (error) {
-    console.error(error);
+    console.error("Erro no banco de dados:", error);
     return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
   } finally {
     await pool.end();
