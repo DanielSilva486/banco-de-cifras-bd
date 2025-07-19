@@ -4,11 +4,17 @@
     </head>
 <body>
     <script>
-        const API_BASE_URL = "/.netlify/functions/"; // A URL base CORRETA para a API
-        // ... (resto das suas variáveis globais)
+        // --- CONSTANTES E ELEMENTOS GLOBAIS ---
+        const API_BASE_URL = "/.netlify/functions/"; // <<<<<<< URL CORRETA
+        const selectMusicas = document.getElementById('musicas-select');
+        const displayCifra = document.getElementById('cifra-display');
+        const searchInput = document.getElementById('searchInput');
+        let todasAsMusicas = [];
+        // ... (resto das suas variáveis globais) ...
 
+        // --- LÓGICA DE CACHE OFFLINE E FETCH (PARA A NOVA API) ---
         document.addEventListener('DOMContentLoaded', () => {
-            const cifrasEmCache = localStorage.getItem('bancoDeCifrasCache');
+            const cifrasEmCache = localStorage.getItem('bancoDeCifrasCache_BD'); // Novo nome de cache para não confundir
             if (cifrasEmCache) {
                 popularListaDeMusicas(JSON.parse(cifrasEmCache));
             }
@@ -19,7 +25,7 @@
                 })
                 .then(data => {
                     if (data && Array.isArray(data)) {
-                        localStorage.setItem('bancoDeCifrasCache', JSON.stringify(data));
+                        localStorage.setItem('bancoDeCifrasCache_BD', JSON.stringify(data));
                         popularListaDeMusicas(data);
                     }
                 })
@@ -29,11 +35,26 @@
         });
 
         function buscarCifra() {
-            // ...
+            stopScroll();
+            const musicaId = selectMusicas.value;
+            if (!musicaId || /*...*/) { return; }
+            
+            const musica = todasAsMusicas.find(m => m.id === musicaId);
+            if (musica && musica.cifra) {
+                mostrarCifra(musica);
+                return;
+            }
+
+            displayCifra.innerHTML = "Carregando cifra...";
+            displayCifra.classList.add('loading');
+            
             fetch(`${API_BASE_URL}getMusicas?id=${encodeURIComponent(musicaId)}`)
                 .then(response => response.json())
                 .then(data => {
-                    // ... (lógica de salvar no cache)
+                    if (musica) {
+                        musica.cifra = data.cifra; 
+                        localStorage.setItem('bancoDeCifrasCache_BD', JSON.stringify(todasAsMusicas));
+                    }
                     mostrarCifra(data);
                 })
                 .catch(error => {
@@ -42,7 +63,9 @@
         }
         
         document.getElementById('novaCifraForm').onsubmit = (event) => {
-            // ...
+            event.preventDefault();
+            // ... (lógica para pegar dados do formulário)
+            
             fetch(API_BASE_URL + "adicionarCifra", {
                 method: 'POST',
                 body: JSON.stringify(dadosFormulario)
@@ -57,8 +80,8 @@
             })
             .catch(error => onSaveFailure(error));
         };
-
-        // ... (resto de todas as suas outras funções e event listeners)
+        
+        // ... (resto do seu JavaScript, sem alterações) ...
     </script>
 </body>
 </html>

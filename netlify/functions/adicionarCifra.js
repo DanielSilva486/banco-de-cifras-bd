@@ -8,11 +8,16 @@ exports.handler = async function (event, context) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    return { statusCode: 500, body: JSON.stringify({ error: "DATABASE_URL não está configurada." }) };
+  }
+
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: connectionString,
     ssl: { rejectUnauthorized: false }
   });
-
+  
   try {
     const dadosFormulario = JSON.parse(event.body);
     const { titulo, artista, cifraBruta } = dadosFormulario;
@@ -20,8 +25,9 @@ exports.handler = async function (event, context) {
 
     await pool.query('INSERT INTO cifras (titulo, artista, cifra_json) VALUES ($1, $2, $3)', [titulo, artista, cifraJson]);
     const novaMusica = { status: "sucesso", novaMusica: { id: `${titulo} - ${artista}`, titulo, artista } };
-    return { statusCode: 200, headers: { "Access-Control-Allow-Origin": "*" }, body: JSON.stringify(novaMusica) };
+    return { statusCode: 200, body: JSON.stringify(novaMusica) };
   } catch (error) {
+    console.error(error);
     return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
   } finally {
     await pool.end();
