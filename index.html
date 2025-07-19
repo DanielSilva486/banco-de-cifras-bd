@@ -1,32 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Banco de Cifras</title>
-    <link rel="manifest" href="manifest.json">
-    <style>
-        /* ... Seu CSS completo e personalizado ... */
-    </style>
-</head>
+    </head>
 <body>
     <script>
-        // --- CONSTANTES E ELEMENTOS GLOBAIS ---
-        const API_BASE_URL = "/.netlify/functions/"; // Nova URL base para a API
-        const selectMusicas = document.getElementById('musicas-select');
-        const displayCifra = document.getElementById('cifra-display');
-        const searchInput = document.getElementById('searchInput');
-        let todasAsMusicas = [];
+        const API_BASE_URL = "/.netlify/functions/"; // A URL base CORRETA para a API
         // ... (resto das suas variáveis globais)
 
-        // --- LÓGICA DE CACHE OFFLINE E FETCH ---
         document.addEventListener('DOMContentLoaded', () => {
             const cifrasEmCache = localStorage.getItem('bancoDeCifrasCache');
             if (cifrasEmCache) {
                 popularListaDeMusicas(JSON.parse(cifrasEmCache));
             }
-
-            // Busca a versão mais recente da internet usando a nova API
             fetch(API_BASE_URL + "getMusicas")
                 .then(response => {
                     if (!response.ok) throw new Error("Erro na rede ao buscar dados.");
@@ -44,27 +29,11 @@
         });
 
         function buscarCifra() {
-            stopScroll();
-            const musicaId = selectMusicas.value;
-            if (!musicaId || /*...*/) { return; }
-            
-            const musica = todasAsMusicas.find(m => m.id === musicaId);
-            if (musica && musica.cifra) {
-                mostrarCifra(musica);
-                return;
-            }
-
-            displayCifra.innerHTML = "Carregando cifra...";
-            displayCifra.classList.add('loading');
-            
-            // Busca a cifra específica usando a nova API
+            // ...
             fetch(`${API_BASE_URL}getMusicas?id=${encodeURIComponent(musicaId)}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (musica) {
-                        musica.cifra = data.cifra; 
-                        localStorage.setItem('bancoDeCifrasCache', JSON.stringify(todasAsMusicas));
-                    }
+                    // ... (lógica de salvar no cache)
                     mostrarCifra(data);
                 })
                 .catch(error => {
@@ -73,14 +42,7 @@
         }
         
         document.getElementById('novaCifraForm').onsubmit = (event) => {
-            event.preventDefault();
-            const statusSalvar = document.getElementById('status-salvar');
-            const btnSalvar = document.getElementById('btnSalvar');
-            const dadosFormulario = { /* ... pega os dados dos inputs ... */ };
-            btnSalvar.disabled = true;
-            statusSalvar.textContent = 'Salvando...';
-
-            // Envia os dados para a nova API
+            // ...
             fetch(API_BASE_URL + "adicionarCifra", {
                 method: 'POST',
                 body: JSON.stringify(dadosFormulario)
@@ -96,7 +58,7 @@
             .catch(error => onSaveFailure(error));
         };
 
-        // ... (resto de todo o seu JavaScript, sem alterações)
+        // ... (resto de todas as suas outras funções e event listeners)
     </script>
 </body>
 </html>
