@@ -4,61 +4,42 @@
     </head>
 <body>
     <script>
-        const API_BASE_URL = "/.netlify/functions/"; // A URL base CORRETA para a API
+        const API_BASE_URL = "/.netlify/functions/";
         // ... (resto das suas variáveis globais)
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const cifrasEmCache = localStorage.getItem('bancoDeCifrasCache');
-            if (cifrasEmCache) {
-                popularListaDeMusicas(JSON.parse(cifrasEmCache));
-            }
-            fetch(API_BASE_URL + "getMusicas")
-                .then(response => {
-                    if (!response.ok) throw new Error("Erro na rede ao buscar dados.");
-                    return response.json();
-                })
-                .then(data => {
-                    if (data && Array.isArray(data)) {
-                        localStorage.setItem('bancoDeCifrasCache', JSON.stringify(data));
-                        popularListaDeMusicas(data);
-                    }
-                })
-                .catch(error => {
-                    console.error("Falha ao buscar cifras da internet. Usando cache se disponível.", error);
-                });
-        });
-
-        function buscarCifra() {
-            // ...
-            fetch(`${API_BASE_URL}getMusicas?id=${encodeURIComponent(musicaId)}`)
-                .then(response => response.json())
-                .then(data => {
-                    // ... (lógica de salvar no cache)
-                    mostrarCifra(data);
-                })
-                .catch(error => {
-                    tratarErro({ message: "Você está offline. Esta cifra ainda não foi salva para uso local." });
-                });
+        function adicionarOpcaoMusica(musica) {
+            const option = document.createElement('option');
+            // A API agora envia o ID numérico, que é mais confiável.
+            option.value = musica.id; 
+            option.textContent = `${musica.titulo} - ${musica.artista}`;
+            selectMusicas.appendChild(option);
         }
-        
-        document.getElementById('novaCifraForm').onsubmit = (event) => {
-            // ...
-            fetch(API_BASE_URL + "adicionarCifra", {
-                method: 'POST',
-                body: JSON.stringify(dadosFormulario)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'sucesso') {
-                    onSaveSuccess(data);
-                } else {
-                    onSaveFailure({ message: data.error || 'Erro desconhecido.' });
-                }
-            })
-            .catch(error => onSaveFailure(error));
-        };
 
-        // ... (resto de todas as suas outras funções e event listeners)
+        function onSaveSuccess(response) {
+            const statusSalvar = document.getElementById('status-salvar');
+            if (response.status === "sucesso") {
+                statusSalvar.style.color = 'green';
+                statusSalvar.textContent = 'Cifra adicionada com sucesso!';
+                
+                // A nova música agora vem com o ID numérico correto do banco
+                todasAsMusicas.push(response.novaMusica);
+                localStorage.setItem('bancoDeCifrasCache_BD', JSON.stringify(todasAsMusicas));
+                
+                filtrarMusicas();
+                
+                setTimeout(() => {
+                    document.getElementById('formModal').style.display = 'none';
+                    document.getElementById('novaCifraForm').reset();
+                    statusSalvar.innerHTML = '';
+                    document.getElementById('btnSalvar').disabled = false;
+                }, 2000);
+            } else {
+                onSaveFailure({ message: response.mensagem || 'Erro desconhecido.' });
+            }
+        }
+
+        // --- O RESTO DO SEU SCRIPT ---
+        // (Copie e cole o resto do seu script aqui, pois as outras funções não precisam de grandes alterações)
     </script>
 </body>
 </html>
