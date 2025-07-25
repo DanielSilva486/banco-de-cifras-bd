@@ -19,10 +19,10 @@
         .search-group { margin-bottom: 20px; }
         #fullscreen-container { position: relative; }
         #cifra-display { margin-top: 10px; min-height: 150px; max-height: 75vh; overflow-y: auto; border: 1px solid #444; padding: 15px; background-color: #121212; border-radius: 5px; scroll-behavior: smooth; }
-        .cifra-linha { margin-bottom: 0.3em; }
+        .cifra-linha { margin-bottom: 0.4em; }
         .acordes { font-family: 'Roboto Mono', 'Courier New', Courier, monospace; font-weight: bold; font-size: 1.15em; line-height: 1.3; white-space: pre; margin-top: 0; margin-bottom: 0; }
         .acorde { color: #3498db; }
-        .letra { font-family: 'Roboto Mono', 'Courier New', Courier, monospace; color: #e0e0e0; font-size: 1.1em; line-height: 1.3; margin-top: 0; margin-bottom: 0; }
+        .letra { font-family: 'Roboto Mono', 'Courier New', Courier, monospace; color: #e0e0e0; font-size: 1.1em; line-height: 1.3; margin-top: 0; margin-bottom: 0; white-space: pre; }
         .loading { text-align: center; padding: 20px; font-style: italic; color: #888; }
         .scroll-controls { display: flex; align-items: center; gap: 15px; padding: 10px; background-color: #2a2a2a; border-radius: 5px; margin-top: 20px; border: 1px solid #444; }
         .scroll-controls button { background-color: #555; color: white; border: none; border-radius: 5px; padding: 8px 12px; cursor: pointer; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center; }
@@ -153,13 +153,11 @@
 
         // --- LÓGICA DE INICIALIZAÇÃO E CACHE ---
         document.addEventListener('DOMContentLoaded', () => {
-            // 1. Tenta carregar a lista de músicas do cache local primeiro
             const musicasEmCache = localStorage.getItem(CACHE_KEY);
             if (musicasEmCache) {
                 popularListaDeMusicas(JSON.parse(musicasEmCache));
             }
 
-            // 2. Busca a lista atualizada da internet
             fetch(API_BASE_URL + "getMusicas")
                 .then(response => {
                     if (!response.ok) throw new Error("Erro na rede ao buscar dados.");
@@ -167,7 +165,6 @@
                 })
                 .then(data => {
                     if (data && Array.isArray(data)) {
-                        // Salva a lista mais recente no cache local
                         localStorage.setItem(CACHE_KEY, JSON.stringify(data));
                         popularListaDeMusicas(data);
                     }
@@ -194,14 +191,13 @@
             displayCifra.innerHTML = "Carregando cifra...";
             displayCifra.classList.add('loading');
 
-            // Nova chamada com FETCH para buscar a cifra por ID
             fetch(`${API_BASE_URL}getMusicas?id=${encodeURIComponent(musicaId)}`)
                 .then(response => {
                     if (!response.ok) throw new Error("Cifra não encontrada ou erro de rede.");
                     return response.json();
                 })
                 .then(data => {
-                    mostrarCifra(data.cifra); // A API retorna um objeto {cifra: ...}
+                    mostrarCifra(data.cifra); 
                 })
                 .catch(tratarErro);
         }
@@ -217,7 +213,7 @@
 
         function renderizarLista(musicas) {
             document.getElementById('resultadosLabel').textContent = `Resultados (${musicas.length} de ${todasAsMusicas.length} músicas):`;
-            selectMusicas.innerHTML = ''; // Limpa a lista antiga
+            selectMusicas.innerHTML = ''; 
             if (musicas.length === 0) {
                 const option = document.createElement('option');
                 option.textContent = 'Nenhum resultado encontrado';
@@ -251,6 +247,8 @@
             displayCifra.classList.remove('loading');
             try {
                 const cifraArray = JSON.parse(cifraJson);
+                const regexAcorde = /\b[A-G](?:#|b)?(?:m|maj|dim|sus|aug|add|M|m7|M7|m9|m11|m13)?[0-9#b]*(?:\([0-9#b,]+\))?(?:\/[A-G](?:#|b)?)?\b/g;
+                
                 cifraArray.forEach(item => {
                     const linhaDiv = document.createElement('div');
                     linhaDiv.className = 'cifra-linha';
@@ -258,9 +256,9 @@
                     const acordesDiv = document.createElement('div');
                     acordesDiv.className = 'acordes';
                     
-                    // Substitui múltiplos espaços por non-breaking spaces para manter o alinhamento
-                    const acordesComEspacos = (item.acordes || '').replace(/ /g, '&nbsp;'); 
-                    acordesDiv.innerHTML = acordesComEspacos.replace(/\b[A-G](?:#|b)?(?:m|maj|dim|sus|aug|add|M|m7|M7|m9|m11|m13)?[0-9#b]*(?:\([0-9#b,]+\))?(?:\/[A-G](?:#|b)?)?\b/g, '<span class="acorde">$&</span>');
+                    // CORREÇÃO APLICADA AQUI: Garante um espaço para linhas sem acordes
+                    const acordesComEspacos = (item.acordes || ' ').replace(/ /g, '&nbsp;'); 
+                    acordesDiv.innerHTML = acordesComEspacos.replace(regexAcorde, '<span class="acorde">$&</span>');
 
                     const letraDiv = document.createElement('div');
                     letraDiv.className = 'letra';
@@ -298,7 +296,6 @@
             statusSalvar.style.color = '#ccc';
             statusSalvar.textContent = 'Salvando no banco de dados...';
 
-            // Nova chamada com FETCH para adicionar cifra
             fetch(API_BASE_URL + "adicionarCifra", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -315,11 +312,9 @@
                     statusSalvar.style.color = 'green';
                     statusSalvar.textContent = 'Cifra adicionada com sucesso!';
                     
-                    // Adiciona a nova música à lista local e atualiza o cache
                     todasAsMusicas.push(data.novaMusica);
                     localStorage.setItem(CACHE_KEY, JSON.stringify(todasAsMusicas));
                     
-                    // Re-renderiza a lista e seleciona a nova música
                     popularListaDeMusicas(todasAsMusicas);
                     selectMusicas.value = data.novaMusica.id;
                     buscarCifra();
@@ -339,13 +334,13 @@
             });
         };
 
-        // --- CONTROLES DE ROLAGEM E TELA CHEIA (sem alterações na lógica) ---
+        // --- CONTROLES DE ROLAGEM E TELA CHEIA ---
         function startScroll() { if (displayCifra.scrollHeight <= displayCifra.clientHeight) return; const speed = speedSlider.value; const intervalTime = 150 - (speed * 10); scrollInterval = setInterval(() => { if (displayCifra.scrollTop + displayCifra.clientHeight >= displayCifra.scrollHeight) { pauseScroll(); } else { displayCifra.scrollTop += 1; } }, intervalTime); playPauseBtn.innerHTML = '⏸️'; isScrolling = true; }
         function pauseScroll() { clearInterval(scrollInterval); playPauseBtn.innerHTML = '▶️'; isScrolling = false; }
         function stopScroll() { clearInterval(scrollInterval); scrollInterval = null; displayCifra.scrollTop = 0; playPauseBtn.innerHTML = '▶️'; isScrolling = false; }
         function toggleFullScreen() { if (!document.fullscreenElement) { fullscreenContainer.requestFullscreen(); } else { document.exitFullscreen(); } }
 
-        // --- EVENT LISTENERS (sem alterações na lógica) ---
+        // --- EVENT LISTENERS ---
         selectMusicas.addEventListener('change', buscarCifra);
         searchInput.addEventListener('input', filtrarMusicas);
         playPauseBtn.addEventListener('click', () => { if (isScrolling) { pauseScroll(); } else { startScroll(); } });
