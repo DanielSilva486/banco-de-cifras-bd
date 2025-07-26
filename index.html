@@ -54,6 +54,69 @@
         .footer-link:hover { opacity: 0.8; }
         .footer-link svg { width: 24px; height: 24px; fill: currentColor; }
         #openHelpBtn { background: none; border: none; color: #87CEFA; font-size: 1em; cursor: pointer; text-decoration: underline; }
+
+/* ====== CÓDIGO PARA RESPONSIVIDADE ====== */
+@media (max-width: 650px) {
+    body {
+        padding: 10px; /* Reduz o espaçamento geral em telas pequenas */
+        padding-bottom: 90px; /* Garante espaço para o footer */
+    }
+
+    .container {
+        padding: 15px;
+    }
+
+    /* --- Correção do Cabeçalho --- */
+    .header {
+        flex-direction: column; /* Empilha o título e os botões */
+        align-items: stretch;   /* Faz os itens ocuparem a largura toda */
+        gap: 20px;
+    }
+
+    .title-group {
+        flex-direction: column; /* Empilha a imagem e o título */
+        align-items: center;    /* Centraliza eles */
+        text-align: center;
+        gap: 10px;
+    }
+
+    .subtitle {
+        padding-left: 0;        /* Remove o espaçamento extra do subtítulo */
+        max-width: 100%;        /* Permite que ocupe toda a largura */
+        text-align: center;
+        margin-top: 15px;
+    }
+
+    .header-actions {
+        flex-direction: row;    /* Coloca os botões lado a lado novamente */
+        width: 100%;
+        gap: 10px;
+    }
+
+    .btn-header {
+        min-width: 0;           /* Remove a largura mínima para ser flexível */
+        flex-grow: 1;           /* Faz os dois botões dividirem o espaço */
+    }
+
+    /* --- Correção dos Controles de Rolagem --- */
+    .scroll-controls {
+        flex-wrap: wrap;        /* Permite que os itens quebrem a linha */
+        justify-content: center;/* Centraliza os itens quando a linha quebra */
+        gap: 10px;
+    }
+
+    .scroll-controls input[type="range"] {
+        min-width: 150px;       /* Garante que a barra de velocidade não fique pequena demais */
+    }
+    
+    /* --- Ajuste do Rodapé --- */
+    footer {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+        font-size: 0.8em;
+    }
+}
     </style>
 </head>
 <body>
